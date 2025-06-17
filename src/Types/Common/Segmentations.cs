@@ -1,0 +1,9 @@
+namespace BACnet.Types.Common;
+
+public enum Segmentations
+{
+    SEGMENTATION_BOTH = 0,
+    SEGMENTATION_TRANSMIT = 1,
+    SEGMENTATION_RECEIVE = 2,
+    SEGMENTATION_NONE = 3,
+}

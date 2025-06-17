@@ -1,0 +1,590 @@
+namespace BACnet.Types.Common;
+
+internal struct PropertyState
+{
+    public enum PropertyStateTypes
+    {
+        BOOLEAN_VALUE,
+        BINARY_VALUE,
+        EVENT_TYPE,
+        POLARITY,
+        PROGRAM_CHANGE,
+        PROGRAM_STATE,
+        REASON_FOR_HALT,
+        RELIABILITY,
+        STATE,
+        SYSTEM_STATUS,
+        UNITS,
+        UNSIGNED_VALUE,
+        LIFE_SAFETY_MODE,
+        LIFE_SAFETY_STATE
+    }
+
+    public struct State
+    {
+        public bool boolean_value;
+        public BinaryPv binaryValue;
+        public EventTypes eventType;
+        public Polarity polarity;
+        public ProgramRequest programChange;
+        public ProgramState programState;
+        public ProgramError programError;
+        public Reliability reliability;
+        public EventStates state;
+        public DeviceStatus systemStatus;
+        public UnitsId units;
+        public uint unsignedValue;
+        public LifeSafetyModes lifeSafetyMode;
+        public LifeSafetyStates lifeSafetyState;
+    }
+
+    public PropertyStateTypes tag;
+    public State state;
+
+    public override string ToString() => $"{tag}:{state}";
+}
+
+internal enum BinaryPv : byte
+{
+    MIN_BINARY_PV = 0,  /* for validating incoming values */
+    BINARY_INACTIVE = 0,
+    BINARY_ACTIVE = 1,
+    MAX_BINARY_PV = 1,  /* for validating incoming values */
+    BINARY_NULL = 255   /* our homemade way of storing this info */
+}
+
+internal enum EventTypes
+{
+    EVENT_CHANGE_OF_BITSTRING = 0,
+    EVENT_CHANGE_OF_STATE = 1,
+    EVENT_CHANGE_OF_VALUE = 2,
+    EVENT_COMMAND_FAILURE = 3,
+    EVENT_FLOATING_LIMIT = 4,
+    EVENT_OUT_OF_RANGE = 5,
+    EVENT_COMPLEX_EVENT_TYPE = 6,
+
+    [Obsolete("Context tag 7 is deprecated")]
+    EVENT_BUFFER_READY_OBSOLETE = 7,
+
+    EVENT_CHANGE_OF_LIFE_SAFETY = 8,
+    EVENT_EXTENDED = 9,
+    EVENT_BUFFER_READY = 10,
+    EVENT_UNSIGNED_RANGE = 11,
+    /* -- enumeration value 12 is reserved for future addenda */
+    EVENT_ACCESS_EVENT = 13,
+    EVENT_DOUBLE_OUT_OF_RANGE = 14,
+    EVENT_SIGNED_OUT_OF_RANGE = 15,
+    EVENT_UNSIGNED_OUT_OF_RANGE = 16,
+    EVENT_CHANGE_OF_CHARACTERSTRING = 17,
+    EVENT_CHANGE_OF_STATUS_FLAGS = 18,
+    EVENT_CHANGE_OF_RELIABILITY = 19,
+    EVENT_NONE = 20,
+    EVENT_CHANGE_OF_DISCRETE_VALUE = 21,
+    EVENT_CHANGE_OF_TIMER = 22,
+    /* Enumerated values 0-63 are reserved for definition by ASHRAE.  */
+    /* Enumerated values 64-65535 may be used by others subject to  */
+    /* the procedures and constraints described in Clause 23.  */
+    /* It is expected that these enumerated values will correspond to  */
+    /* the use of the complex-event-type CHOICE [6] of the  */
+    /* BACnetNotificationParameters production. */
+    /* The last enumeration used in this version is 11. */
+    /* do the max range inside of enum so that
+       compilers will allocate adequate sized datatype for enum
+       which is used to store decoding */
+    EVENT_PROPRIETARY_MIN = 64,
+    EVENT_PROPRIETARY_MAX = 65535
+}
+
+internal enum Polarity : byte
+{
+    POLARITY_NORMAL = 0,
+    POLARITY_REVERSE = 1
+}
+
+internal enum ProgramRequest
+{
+    PROGRAM_REQUEST_READY = 0,
+    PROGRAM_REQUEST_LOAD = 1,
+    PROGRAM_REQUEST_RUN = 2,
+    PROGRAM_REQUEST_HALT = 3,
+    PROGRAM_REQUEST_RESTART = 4,
+    PROGRAM_REQUEST_UNLOAD = 5
+}
+
+internal enum ProgramState
+{
+    PROGRAM_STATE_IDLE = 0,
+    PROGRAM_STATE_LOADING = 1,
+    PROGRAM_STATE_RUNNING = 2,
+    PROGRAM_STATE_WAITING = 3,
+    PROGRAM_STATE_HALTED = 4,
+    PROGRAM_STATE_UNLOADING = 5
+}
+
+internal enum ProgramError : ushort
+{
+    PROGRAM_ERROR_NORMAL = 0,
+    PROGRAM_ERROR_LOAD_FAILED = 1,
+    PROGRAM_ERROR_INTERNAL = 2,
+    PROGRAM_ERROR_PROGRAM = 3,
+    PROGRAM_ERROR_OTHER = 4,
+    /* Enumerated values 0-63 are reserved for definition by ASHRAE.  */
+    /* Enumerated values 64-65535 may be used by others subject to  */
+    /* the procedures and constraints described in Clause 23. */
+    /* do the max range inside of enum so that
+       compilers will allocate adequate sized datatype for enum
+       which is used to store decoding */
+    PROGRAM_ERROR_PROPRIETARY_MIN = 64,
+    PROGRAM_ERROR_PROPRIETARY_MAX = 65535
+}
+
+internal enum Reliability : uint
+{
+    RELIABILITY_NO_FAULT_DETECTED = 0,
+    RELIABILITY_NO_SENSOR = 1,
+    RELIABILITY_OVER_RANGE = 2,
+    RELIABILITY_UNDER_RANGE = 3,
+    RELIABILITY_OPEN_LOOP = 4,
+    RELIABILITY_SHORTED_LOOP = 5,
+    RELIABILITY_NO_OUTPUT = 6,
+    RELIABILITY_UNRELIABLE_OTHER = 7,
+    RELIABILITY_PROCESS_ERROR = 8,
+    RELIABILITY_MULTI_STATE_FAULT = 9,
+    RELIABILITY_CONFIGURATION_ERROR = 10,
+    RELIABILITY_MEMBER_FAULT = 11,
+    RELIABILITY_COMMUNICATION_FAILURE = 12,
+    RELIABILITY_TRIPPED = 13,
+    /* Enumerated values 0-63 are reserved for definition by ASHRAE.  */
+    /* Enumerated values 64-65535 may be used by others subject to  */
+    /* the procedures and constraints described in Clause 23. */
+    /* do the max range inside of enum so that
+       compilers will allocate adequate sized datatype for enum
+       which is used to store decoding */
+    RELIABILITY_PROPRIETARY_MIN = 64,
+    RELIABILITY_PROPRIETARY_MAX = 65535
+}
+
+internal enum EventStates
+{
+    EVENT_STATE_NORMAL = 0,
+    EVENT_STATE_FAULT = 1,
+    EVENT_STATE_OFFNORMAL = 2,
+    EVENT_STATE_HIGH_LIMIT = 3,
+    EVENT_STATE_LOW_LIMIT = 4,
+    EVENT_STATE_LIFE_SAFETY_ALARM = 5
+}
+
+internal enum DeviceStatus : byte
+{
+    OPERATIONAL = 0,
+    OPERATIONAL_READONLY = 1,
+    DOWNLOAD_REQUIRED = 2,
+    DOWNLOAD_IN_PROGRESS = 3,
+    NON_OPERATIONAL = 4,
+    BACKUP_IN_PROGRESS = 5
+}
+
+// Add FC : from Karg's Stack
+internal enum UnitsId
+{
+    UNITS_METERS_PER_SECOND_PER_SECOND = 166,
+    /* Area */
+    UNITS_SQUARE_METERS = 0,
+    UNITS_SQUARE_CENTIMETERS = 116,
+    UNITS_SQUARE_FEET = 1,
+    UNITS_SQUARE_INCHES = 115,
+    /* Currency */
+    UNITS_CURRENCY1 = 105,
+    UNITS_CURRENCY2 = 106,
+    UNITS_CURRENCY3 = 107,
+    UNITS_CURRENCY4 = 108,
+    UNITS_CURRENCY5 = 109,
+    UNITS_CURRENCY6 = 110,
+    UNITS_CURRENCY7 = 111,
+    UNITS_CURRENCY8 = 112,
+    UNITS_CURRENCY9 = 113,
+    UNITS_CURRENCY10 = 114,
+    /* Electrical */
+    UNITS_MILLIAMPERES = 2,
+    UNITS_AMPERES = 3,
+    UNITS_AMPERES_PER_METER = 167,
+    UNITS_AMPERES_PER_SQUARE_METER = 168,
+    UNITS_AMPERE_SQUARE_METERS = 169,
+    UNITS_DECIBELS = 199,
+    UNITS_DECIBELS_MILLIVOLT = 200,
+    UNITS_DECIBELS_VOLT = 201,
+    UNITS_FARADS = 170,
+    UNITS_HENRYS = 171,
+    UNITS_OHMS = 4,
+    UNITS_OHM_METERS = 172,
+    UNITS_MILLIOHMS = 145,
+    UNITS_KILOHMS = 122,
+    UNITS_MEGOHMS = 123,
+    UNITS_MICROSIEMENS = 190,
+    UNITS_MILLISIEMENS = 202,
+    UNITS_SIEMENS = 173,        /* 1 mho equals 1 siemens */
+    UNITS_SIEMENS_PER_METER = 174,
+    UNITS_TESLAS = 175,
+    UNITS_VOLTS = 5,
+    UNITS_MILLIVOLTS = 124,
+    UNITS_KILOVOLTS = 6,
+    UNITS_MEGAVOLTS = 7,
+    UNITS_VOLT_AMPERES = 8,
+    UNITS_KILOVOLT_AMPERES = 9,
+    UNITS_MEGAVOLT_AMPERES = 10,
+    UNITS_VOLT_AMPERES_REACTIVE = 11,
+    UNITS_KILOVOLT_AMPERES_REACTIVE = 12,
+    UNITS_MEGAVOLT_AMPERES_REACTIVE = 13,
+    UNITS_VOLTS_PER_DEGREE_KELVIN = 176,
+    UNITS_VOLTS_PER_METER = 177,
+    UNITS_DEGREES_PHASE = 14,
+    UNITS_POWER_FACTOR = 15,
+    UNITS_WEBERS = 178,
+    /* Energy */
+    UNITS_JOULES = 16,
+    UNITS_KILOJOULES = 17,
+    UNITS_KILOJOULES_PER_KILOGRAM = 125,
+    UNITS_MEGAJOULES = 126,
+    UNITS_WATT_HOURS = 18,
+    UNITS_KILOWATT_HOURS = 19,
+    UNITS_MEGAWATT_HOURS = 146,
+    UNITS_WATT_HOURS_REACTIVE = 203,
+    UNITS_KILOWATT_HOURS_REACTIVE = 204,
+    UNITS_MEGAWATT_HOURS_REACTIVE = 205,
+    UNITS_BTUS = 20,
+    UNITS_KILO_BTUS = 147,
+    UNITS_MEGA_BTUS = 148,
+    UNITS_THERMS = 21,
+    UNITS_TON_HOURS = 22,
+    /* Enthalpy */
+    UNITS_JOULES_PER_KILOGRAM_DRY_AIR = 23,
+    UNITS_KILOJOULES_PER_KILOGRAM_DRY_AIR = 149,
+    UNITS_MEGAJOULES_PER_KILOGRAM_DRY_AIR = 150,
+    UNITS_BTUS_PER_POUND_DRY_AIR = 24,
+    UNITS_BTUS_PER_POUND = 117,
+    /* Entropy */
+    UNITS_JOULES_PER_DEGREE_KELVIN = 127,
+    UNITS_KILOJOULES_PER_DEGREE_KELVIN = 151,
+    UNITS_MEGAJOULES_PER_DEGREE_KELVIN = 152,
+    UNITS_JOULES_PER_KILOGRAM_DEGREE_KELVIN = 128,
+    /* Force */
+    UNITS_NEWTON = 153,
+    /* Frequency */
+    UNITS_CYCLES_PER_HOUR = 25,
+    UNITS_CYCLES_PER_MINUTE = 26,
+    UNITS_HERTZ = 27,
+    UNITS_KILOHERTZ = 129,
+    UNITS_MEGAHERTZ = 130,
+    UNITS_PER_HOUR = 131,
+    /* Humidity */
+    UNITS_GRAMS_OF_WATER_PER_KILOGRAM_DRY_AIR = 28,
+    UNITS_PERCENT_RELATIVE_HUMIDITY = 29,
+    /* Length */
+    UNITS_MICROMETERS = 194,
+    UNITS_MILLIMETERS = 30,
+    UNITS_CENTIMETERS = 118,
+    UNITS_KILOMETERS = 193,
+    UNITS_METERS = 31,
+    UNITS_INCHES = 32,
+    UNITS_FEET = 33,
+    /* Light */
+    UNITS_CANDELAS = 179,
+    UNITS_CANDELAS_PER_SQUARE_METER = 180,
+    UNITS_WATTS_PER_SQUARE_FOOT = 34,
+    UNITS_WATTS_PER_SQUARE_METER = 35,
+    UNITS_LUMENS = 36,
+    UNITS_LUXES = 37,
+    UNITS_FOOT_CANDLES = 38,
+    /* Mass */
+    UNITS_MILLIGRAMS = 196,
+    UNITS_GRAMS = 195,
+    UNITS_KILOGRAMS = 39,
+    UNITS_POUNDS_MASS = 40,
+    UNITS_TONS = 41,
+    /* Mass Flow */
+    UNITS_GRAMS_PER_SECOND = 154,
+    UNITS_GRAMS_PER_MINUTE = 155,
+    UNITS_KILOGRAMS_PER_SECOND = 42,
+    UNITS_KILOGRAMS_PER_MINUTE = 43,
+    UNITS_KILOGRAMS_PER_HOUR = 44,
+    UNITS_POUNDS_MASS_PER_SECOND = 119,
+    UNITS_POUNDS_MASS_PER_MINUTE = 45,
+    UNITS_POUNDS_MASS_PER_HOUR = 46,
+    UNITS_TONS_PER_HOUR = 156,
+    /* Power */
+    UNITS_MILLIWATTS = 132,
+    UNITS_WATTS = 47,
+    UNITS_KILOWATTS = 48,
+    UNITS_MEGAWATTS = 49,
+    UNITS_BTUS_PER_HOUR = 50,
+    UNITS_KILO_BTUS_PER_HOUR = 157,
+    UNITS_HORSEPOWER = 51,
+    UNITS_TONS_REFRIGERATION = 52,
+    /* Pressure */
+    UNITS_PASCALS = 53,
+    UNITS_HECTOPASCALS = 133,
+    UNITS_KILOPASCALS = 54,
+    UNITS_MILLIBARS = 134,
+    UNITS_BARS = 55,
+    UNITS_POUNDS_FORCE_PER_SQUARE_INCH = 56,
+    UNITS_MILLIMETERS_OF_WATER = 206,
+    UNITS_CENTIMETERS_OF_WATER = 57,
+    UNITS_INCHES_OF_WATER = 58,
+    UNITS_MILLIMETERS_OF_MERCURY = 59,
+    UNITS_CENTIMETERS_OF_MERCURY = 60,
+    UNITS_INCHES_OF_MERCURY = 61,
+    /* Temperature */
+    UNITS_DEGREES_CELSIUS = 62,
+    UNITS_DEGREES_KELVIN = 63,
+    UNITS_DEGREES_KELVIN_PER_HOUR = 181,
+    UNITS_DEGREES_KELVIN_PER_MINUTE = 182,
+    UNITS_DEGREES_FAHRENHEIT = 64,
+    UNITS_DEGREE_DAYS_CELSIUS = 65,
+    UNITS_DEGREE_DAYS_FAHRENHEIT = 66,
+    UNITS_DELTA_DEGREES_FAHRENHEIT = 120,
+    UNITS_DELTA_DEGREES_KELVIN = 121,
+    /* Time */
+    UNITS_YEARS = 67,
+    UNITS_MONTHS = 68,
+    UNITS_WEEKS = 69,
+    UNITS_DAYS = 70,
+    UNITS_HOURS = 71,
+    UNITS_MINUTES = 72,
+    UNITS_SECONDS = 73,
+    UNITS_HUNDREDTHS_SECONDS = 158,
+    UNITS_MILLISECONDS = 159,
+    /* Torque */
+    UNITS_NEWTON_METERS = 160,
+    /* Velocity */
+    UNITS_MILLIMETERS_PER_SECOND = 161,
+    UNITS_MILLIMETERS_PER_MINUTE = 162,
+    UNITS_METERS_PER_SECOND = 74,
+    UNITS_METERS_PER_MINUTE = 163,
+    UNITS_METERS_PER_HOUR = 164,
+    UNITS_KILOMETERS_PER_HOUR = 75,
+    UNITS_FEET_PER_SECOND = 76,
+    UNITS_FEET_PER_MINUTE = 77,
+    UNITS_MILES_PER_HOUR = 78,
+    /* Volume */
+    UNITS_CUBIC_FEET = 79,
+    UNITS_CUBIC_METERS = 80,
+    UNITS_IMPERIAL_GALLONS = 81,
+    UNITS_MILLILITERS = 197,
+    UNITS_LITERS = 82,
+    UNITS_US_GALLONS = 83,
+    /* Volumetric Flow */
+    UNITS_CUBIC_FEET_PER_SECOND = 142,
+    UNITS_CUBIC_FEET_PER_MINUTE = 84,
+
+    // One unit in Addendum 135-2012bg
+    UNITS_MILLION_CUBIC_FEET_PER_MINUTE = 254,
+
+    UNITS_CUBIC_FEET_PER_HOUR = 191,
+
+    // five units in Addendum 135-2012bg
+    UNITS_STANDARD_CUBIC_FEET_PER_DAY = 47808,
+
+    UNITS_MILLION_STANDARD_CUBIC_FEET_PER_DAY = 47809,
+    UNITS_THOUSAND_CUBIC_FEET_PER_DAY = 47810,
+    UNITS_THOUSAND_STANDARD_CUBIC_FEET_PER_DAY = 47811,
+    UINITS_POUNDS_MASS_PER_DAY = 47812,
+    UNITS_CUBIC_METERS_PER_SECOND = 85,
+    UNITS_CUBIC_METERS_PER_MINUTE = 165,
+    UNITS_CUBIC_METERS_PER_HOUR = 135,
+    UNITS_IMPERIAL_GALLONS_PER_MINUTE = 86,
+    UNITS_MILLILITERS_PER_SECOND = 198,
+    UNITS_LITERS_PER_SECOND = 87,
+    UNITS_LITERS_PER_MINUTE = 88,
+    UNITS_LITERS_PER_HOUR = 136,
+    UNITS_US_GALLONS_PER_MINUTE = 89,
+    UNITS_US_GALLONS_PER_HOUR = 192,
+    /* Other */
+    UNITS_DEGREES_ANGULAR = 90,
+    UNITS_DEGREES_CELSIUS_PER_HOUR = 91,
+    UNITS_DEGREES_CELSIUS_PER_MINUTE = 92,
+    UNITS_DEGREES_FAHRENHEIT_PER_HOUR = 93,
+    UNITS_DEGREES_FAHRENHEIT_PER_MINUTE = 94,
+    UNITS_JOULE_SECONDS = 183,
+    UNITS_KILOGRAMS_PER_CUBIC_METER = 186,
+    UNITS_KW_HOURS_PER_SQUARE_METER = 137,
+    UNITS_KW_HOURS_PER_SQUARE_FOOT = 138,
+    UNITS_MEGAJOULES_PER_SQUARE_METER = 139,
+    UNITS_MEGAJOULES_PER_SQUARE_FOOT = 140,
+    UNITS_NO_UNITS = 95,
+    UNITS_NEWTON_SECONDS = 187,
+    UNITS_NEWTONS_PER_METER = 188,
+    UNITS_PARTS_PER_MILLION = 96,
+    UNITS_PARTS_PER_BILLION = 97,
+    UNITS_PERCENT = 98,
+    UNITS_PERCENT_OBSCURATION_PER_FOOT = 143,
+    UNITS_PERCENT_OBSCURATION_PER_METER = 144,
+    UNITS_PERCENT_PER_SECOND = 99,
+    UNITS_PER_MINUTE = 100,
+    UNITS_PER_SECOND = 101,
+    UNITS_PSI_PER_DEGREE_FAHRENHEIT = 102,
+    UNITS_RADIANS = 103,
+    UNITS_RADIANS_PER_SECOND = 184,
+    UNITS_REVOLUTIONS_PER_MINUTE = 104,
+    UNITS_SQUARE_METERS_PER_NEWTON = 185,
+    UNITS_WATTS_PER_METER_PER_DEGREE_KELVIN = 189,
+    UNITS_WATTS_PER_SQUARE_METER_DEGREE_KELVIN = 141,
+    UNITS_PER_MILLE = 207,
+    UNITS_GRAMS_PER_GRAM = 208,
+    UNITS_KILOGRAMS_PER_KILOGRAM = 209,
+    UNITS_GRAMS_PER_KILOGRAM = 210,
+    UNITS_MILLIGRAMS_PER_GRAM = 211,
+    UNITS_MILLIGRAMS_PER_KILOGRAM = 212,
+    UNITS_GRAMS_PER_MILLILITER = 213,
+    UNITS_GRAMS_PER_LITER = 214,
+    UNITS_MILLIGRAMS_PER_LITER = 215,
+    UNITS_MICROGRAMS_PER_LITER = 216,
+    UNITS_GRAMS_PER_CUBIC_METER = 217,
+    UNITS_MILLIGRAMS_PER_CUBIC_METER = 218,
+    UNITS_MICROGRAMS_PER_CUBIC_METER = 219,
+    UNITS_NANOGRAMS_PER_CUBIC_METER = 220,
+    UNITS_GRAMS_PER_CUBIC_CENTIMETER = 221,
+    UNITS_BECQUERELS = 222,
+    UNITS_KILOBECQUERELS = 223,
+    UNITS_MEGABECQUERELS = 224,
+    UNITS_GRAY = 225,
+    UNITS_MILLIGRAY = 226,
+    UNITS_MICROGRAY = 227,
+    UNITS_SIEVERTS = 228,
+    UNITS_MILLISIEVERTS = 229,
+    UNITS_MICROSIEVERTS = 230,
+    UNITS_MICROSIEVERTS_PER_HOUR = 231,
+    UNITS_DECIBELS_A = 232,
+    UNITS_NEPHELOMETRIC_TURBIDITY_UNIT = 233,
+    UNITS_PH = 234,
+    UNITS_GRAMS_PER_SQUARE_METER = 235,
+
+    // Since Addendum 135-2012ar
+    UNITS_MINUTES_PER_DEGREE_KELVIN = 236,
+
+    UNITS_METER_SQUARED_PER_METER = 237,
+    UNITS_AMPERE_SECONDS = 238,
+    UNITS_VOLT_AMPERE_HOURS = 239,
+    UNITS_KILOVOLT_AMPERE_HOURS = 240,
+    UNITS_MEGAVOLT_AMPERE_HOURS = 241,
+    UNITS_VOLT_AMPERE_HOURS_REACTIVE = 242,
+    UNITS_KILOVOLT_AMPERE_HOURS_REACTIVE = 243,
+    UNITS_MEGAVOLT_AMPERE_HOURS_REACTIVE = 244,
+    UNITS_VOLT_SQUARE_HOURS = 245,
+    UNITS_AMPERE_SQUARE_HOURS = 246,
+    UNITS_JOULE_PER_HOURS = 247,
+    UNITS_CUBIC_FEET_PER_DAY = 248,
+    UNITS_CUBIC_METERS_PER_DAY = 249,
+    UNITS_WATT_HOURS_PER_CUBIC_METER = 250,
+    UNITS_JOULES_PER_CUBIC_METER = 251,
+    UNITS_MOLE_PERCENT = 252,
+    UNITS_PASCAL_SECONDS = 253,
+    UNITS_MILLION_STANDARD_CUBIC_FEET_PER_MINUTE = 254,
+    UNITS_RESERVED_RANGE_MAX = 255,
+    /* Enumerated values 256-47807 may be used by others
+       subject to the procedures and constraints described in Clause 23. */
+    UNITS_PROPRIETARY_RANGE_MIN = 256,
+    UNITS_PROPRIETARY_RANGE_MAX = 47807,
+    /* Enumerated values 47808-49999 are reserved for definition by ASHRAE. */
+    UNITS_RESERVED_RANGE_MIN2 = 47808,
+    UNITS_POUNDS_MASS_PER_DAY = 47812,
+    /* 47813 - NOT USED */
+    UNITS_MILLIREMS = 47814,
+    UNITS_MILLIREMS_PER_HOUR = 47815,
+    UNITS_RESERVED_RANGE_MAX2 = 49999,
+    UNITS_PROPRIETARY_RANGE_MIN2 = 50000,
+    /* Enumerated values 50000-65535 may be used by others
+       subject to the procedures and constraints described in Clause 23. */
+    /* do the proprietary range inside of enum so that
+       compilers will allocate adequate sized datatype for enum
+       which is used to store decoding */
+    UNITS_PROPRIETARY_RANGE_MAX2 = 65535
+}
+
+internal enum LifeSafetyModes
+{
+    MIN_LIFE_SAFETY_MODE = 0,
+    LIFE_SAFETY_MODE_OFF = 0,
+    LIFE_SAFETY_MODE_ON = 1,
+    LIFE_SAFETY_MODE_TEST = 2,
+    LIFE_SAFETY_MODE_MANNED = 3,
+    LIFE_SAFETY_MODE_UNMANNED = 4,
+    LIFE_SAFETY_MODE_ARMED = 5,
+    LIFE_SAFETY_MODE_DISARMED = 6,
+    LIFE_SAFETY_MODE_PREARMED = 7,
+    LIFE_SAFETY_MODE_SLOW = 8,
+    LIFE_SAFETY_MODE_FAST = 9,
+    LIFE_SAFETY_MODE_DISCONNECTED = 10,
+    LIFE_SAFETY_MODE_ENABLED = 11,
+    LIFE_SAFETY_MODE_DISABLED = 12,
+    LIFE_SAFETY_MODE_AUTOMATIC_RELEASE_DISABLED = 13,
+    LIFE_SAFETY_MODE_DEFAULT = 14,
+    MAX_LIFE_SAFETY_MODE = 15,
+    /* Enumerated values 0-255 are reserved for definition by ASHRAE.  */
+    /* Enumerated values 256-65535 may be used by others subject to  */
+    /* procedures and constraints described in Clause 23. */
+    /* do the max range inside of enum so that
+       compilers will allocate adequate sized datatype for enum
+       which is used to store decoding */
+    LIFE_SAFETY_MODE_PROPRIETARY_MIN = 256,
+    LIFE_SAFETY_MODE_PROPRIETARY_MAX = 65535
+}
+
+internal enum LifeSafetyStates
+{
+    MIN_LIFE_SAFETY_STATE = 0,
+    LIFE_SAFETY_STATE_QUIET = 0,
+    LIFE_SAFETY_STATE_PRE_ALARM = 1,
+    LIFE_SAFETY_STATE_ALARM = 2,
+    LIFE_SAFETY_STATE_FAULT = 3,
+    LIFE_SAFETY_STATE_FAULT_PRE_ALARM = 4,
+    LIFE_SAFETY_STATE_FAULT_ALARM = 5,
+    LIFE_SAFETY_STATE_NOT_READY = 6,
+    LIFE_SAFETY_STATE_ACTIVE = 7,
+    LIFE_SAFETY_STATE_TAMPER = 8,
+    LIFE_SAFETY_STATE_TEST_ALARM = 9,
+    LIFE_SAFETY_STATE_TEST_ACTIVE = 10,
+    LIFE_SAFETY_STATE_TEST_FAULT = 11,
+    LIFE_SAFETY_STATE_TEST_FAULT_ALARM = 12,
+    LIFE_SAFETY_STATE_HOLDUP = 13,
+    LIFE_SAFETY_STATE_DURESS = 14,
+    LIFE_SAFETY_STATE_TAMPER_ALARM = 15,
+    LIFE_SAFETY_STATE_ABNORMAL = 16,
+    LIFE_SAFETY_STATE_EMERGENCY_POWER = 17,
+    LIFE_SAFETY_STATE_DELAYED = 18,
+    LIFE_SAFETY_STATE_BLOCKED = 19,
+    LIFE_SAFETY_STATE_LOCAL_ALARM = 20,
+    LIFE_SAFETY_STATE_GENERAL_ALARM = 21,
+    LIFE_SAFETY_STATE_SUPERVISORY = 22,
+    LIFE_SAFETY_STATE_TEST_SUPERVISORY = 23,
+    MAX_LIFE_SAFETY_STATE = 24,
+    /* Enumerated values 0-255 are reserved for definition by ASHRAE.  */
+    /* Enumerated values 256-65535 may be used by others subject to  */
+    /* procedures and constraints described in Clause 23. */
+    /* do the max range inside of enum so that
+       compilers will allocate adequate sized datatype for enum
+       which is used to store decoding */
+    LIFE_SAFETY_STATE_PROPRIETARY_MIN = 256,
+    LIFE_SAFETY_STATE_PROPRIETARY_MAX = 65535
+}
+
+internal enum LifeSafetyOperations
+{
+    LIFE_SAFETY_OP_NONE = 0,
+    LIFE_SAFETY_OP_SILENCE = 1,
+    LIFE_SAFETY_OP_SILENCE_AUDIBLE = 2,
+    LIFE_SAFETY_OP_SILENCE_VISUAL = 3,
+    LIFE_SAFETY_OP_RESET = 4,
+    LIFE_SAFETY_OP_RESET_ALARM = 5,
+    LIFE_SAFETY_OP_RESET_FAULT = 6,
+    LIFE_SAFETY_OP_UNSILENCE = 7,
+    LIFE_SAFETY_OP_UNSILENCE_AUDIBLE = 8,
+    LIFE_SAFETY_OP_UNSILENCE_VISUAL = 9,
+    /* Enumerated values 0-63 are reserved for definition by ASHRAE.  */
+    /* Enumerated values 64-65535 may be used by others subject to  */
+    /* procedures and constraints described in Clause 23. */
+    /* do the max range inside of enum so that
+       compilers will allocate adequate sized datatype for enum
+       which is used to store decoding */
+    LIFE_SAFETY_OP_PROPRIETARY_MIN = 64,
+    LIFE_SAFETY_OP_PROPRIETARY_MAX = 65535
+}
