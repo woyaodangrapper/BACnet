@@ -1,4 +1,6 @@
-﻿using System.Net.NetworkInformation;
+﻿// Ignore Spelling: bbmd
+
+using System.Net.NetworkInformation;
 
 namespace BACnet.Extensions;
 
@@ -65,9 +67,9 @@ internal static class NetworkExtension
         byte[] maskBytes = broadcastMask.GetAddressBytes();
         int len = addrBytes.Length;
 
-        // 结果缓冲区：Stackalloc 当长度 <= 16 时，否则退回到堆分配
+        // 结果缓冲区：使用 stackalloc 分配 Span<byte>
         Span<byte> result = len <= 16
-            ? stackalloc byte[16][..len]
+            ? stackalloc byte[len]
             : new byte[len];
 
         // 计算：result[i] = addrBytes[i] OR (~maskBytes[i])
@@ -80,7 +82,7 @@ internal static class NetworkExtension
         IPAddress targetIp = family switch
         {
             AddressFamily.InterNetwork => new IPAddress(result),
-            AddressFamily.InterNetworkV6 => new IPAddress(result, bbmd.Address.ScopeId),
+            AddressFamily.InterNetworkV6 => new IPAddress(result.ToArray(), bbmd.Address.ScopeId),
             _ => throw new InvalidOperationException("Unsupported address family.")
         };
 
