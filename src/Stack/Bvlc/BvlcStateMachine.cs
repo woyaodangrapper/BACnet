@@ -33,7 +33,10 @@ public class BvlcStateMachine(DeviceState initial) : IDisposable
     { }
 
     public IObservable<DeviceState> StateChanged => _stateSubject.DistinctUntilChanged();
+
     public DeviceState Current => _stateSubject.Value;
+
+    public bool Ok => _stateSubject.Value == DeviceState.Running;
 
     public void ChangeTo(DeviceState next)
     {

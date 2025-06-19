@@ -1,6 +1,6 @@
 ﻿namespace BACnet.Stack.Bvlc;
 
-internal enum BvlcFunction : byte
+public enum BvlcFunction : byte
 {
     BVLC_RESULT = 0,
     BVLC_WRITE_BROADCAST_DISTRIBUTION_TABLE = 1,

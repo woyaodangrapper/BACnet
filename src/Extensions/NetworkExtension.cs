@@ -52,7 +52,7 @@ internal static class NetworkExtension
     /// <param name="bbmd">源 BBMD 的 IP 端点（IPv4 或 IPv6）。</param>
     /// <param name="broadcastMask">广播分发掩码，应与 bbmd 地址族一致。</param>
     /// <returns>计算后的目标 IPEndPoint。</returns>
-    public static IPEndPoint ComputeResolveForwardAddress(IPEndPoint bbmd, IPAddress broadcastMask)
+    public static IPEndPoint ComputeResolveAddress(IPEndPoint bbmd, IPAddress broadcastMask)
     {
         // 只支持 IPv4 和 IPv6，且掩码地址族必须与 BBMD 地址一致
         AddressFamily family = bbmd.Address.AddressFamily;
