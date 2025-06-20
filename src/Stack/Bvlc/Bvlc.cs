@@ -283,10 +283,10 @@ internal class Bvlc : IBvlc
         }
     }
 
-    private sealed class Dispatcher
+    private sealed class Dispatcher(IChannel channel, int port)
     {
-        private readonly IChannel _channel;
-        private readonly int _defaultPort;
+        private readonly IChannel _channel = channel;
+        private readonly int _defaultPort = port;
 
         // 存储路由器设备的 IP 地址和掩码（BBMD）。
         private readonly ConcurrentDictionary<IPEndPoint, IPAddress> _routerDevices = [];
@@ -295,12 +295,6 @@ internal class Bvlc : IBvlc
         private readonly ConcurrentDictionary<IPEndPoint, DateTime> _foreignDevices = [];
 
         private readonly string _broadcast = NetworkExtension.GetBroadcastAddress()?.ToString() ?? "";
-
-        public Dispatcher(IChannel channel, int port)
-        {
-            _channel = channel;
-            _defaultPort = port;
-        }
 
         public async Task<bool> TryDispatchAsync(ReadOnlyMemory<byte> packet, bool isToAll, IPEndPoint sender)
         {
@@ -396,6 +390,7 @@ public readonly record struct BvlcDecodeResult(int Result, BvlcFunction Function
 }
 
 /**
+ *
  * +--------+----------+-------------------+
  * | Byte 0 | Byte 1   | Bytes 2 and 3     |
  * +--------+----------+-------------------+

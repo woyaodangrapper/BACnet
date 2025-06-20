@@ -4,100 +4,124 @@ using System.Net.NetworkInformation;
 
 namespace BACnet.Types.Common;
 
-internal class Address : IEncode
+internal class Address : IEncode, IEquatable<Address>
 {
-    public ushort net;
-    public byte[] adr;
-    public byte[] VMac = new byte[3]; // for IP V6, could be integrated also as 3 additional bytes in adr
-    public AddressTypes type;
+    private readonly ushort _net;
+    private readonly byte[] _adr;
+    private readonly byte[] _vmac;
+    private readonly AddressTypes _type;
 
-    // Modif FC
-    public Address RoutedSource = null;
+    private readonly Address? _routedSource;
+    private readonly Address? _routedDestination;
 
-    // DAL
-    public Address RoutedDestination = null;
+    // —— 公共只读属性 ——————————————————
 
-    public Address(AddressTypes addressType, ushort network = 0, byte[] address = null)
+    /// <summary>网络号（DNET）。</summary>
+    public ushort Net => _net;
+
+    /// <summary>设备地址（DADR，长度 ≤ 7）。</summary>
+    public byte[] Adr => _adr;
+
+    /// <summary>MAC（IPv6 扩展）</summary>
+    public byte[] VMac => _vmac;
+
+    /// <summary>地址类型。</summary>
+    public AddressTypes Type => _type;
+
+    /// <summary>路由源地址。</summary>
+    public Address? RoutedSource => _routedSource;
+
+    /// <summary>路由目标地址。</summary>
+    public Address? RoutedDestination => _routedDestination;
+
+    public Address(AddressTypes addressType, ushort network, byte[] address, byte[]? mac = default)
     {
-        type = addressType;
-        net = network;
-        adr = address;
+        _net = network;
+        _adr = address;
+        _type = addressType;
+        _vmac = mac ?? new byte[3];
     }
 
-    public Address(AddressTypes addressType, string address = null, ushort network = 0)
-        : this(addressType, network)
+    public Address(AddressTypes addressType, ushort network, string address, byte[]? mac = default)
+      : this(addressType, network, CreateAddress(addressType, address), mac)
     {
-        if (address == null)
-            return;
+    }
 
+    private static byte[] CreateAddress(AddressTypes type, string address)
+    {
         switch (type)
         {
             case AddressTypes.IP:
-                adr = new byte[6];
-                var addressParts = address.Split(':');
-                var addressBytes = IPAddress.Parse(addressParts[0]).GetAddressBytes();
-                Array.Copy(addressBytes, adr, addressBytes.Length);
+                {
+                    string[] parts = address.Split(':');
+                    byte[] ipBytes = IPAddress.Parse(parts[0]).GetAddressBytes();
 
-                var portBytes = BitConverter.GetBytes(addressParts.Length > 1
-                    ? ushort.Parse(addressParts[1])
-                    : (ushort)0xBAC0);
+                    byte[] adr = new byte[6]; // 4 bytes IP + 2 bytes port
+                    Array.Copy(ipBytes, adr, ipBytes.Length);
 
-                if (BitConverter.IsLittleEndian)
-                    portBytes.AsSpan().Reverse();
+                    ushort port = parts.Length > 1 ? ushort.Parse(parts[1]) : (ushort)0xBAC0;
+                    byte[] portBytes = BitConverter.GetBytes(port);
+                    if (BitConverter.IsLittleEndian)
+                    {
+                        Array.Reverse(portBytes);
+                    }
 
-                Array.Copy(portBytes, 0, adr, addressBytes.Length, portBytes.Length);
-                break;
-
+                    Array.Copy(portBytes, 0, adr, ipBytes.Length, portBytes.Length);
+                    return adr;
+                }
             case AddressTypes.Ethernet:
-                adr = PhysicalAddress.Parse(address).GetAddressBytes();
-                break;
-
+                {
+                    return PhysicalAddress.Parse(address).GetAddressBytes();
+                }
             default:
-                throw new NotSupportedException("String format is not supported for address type " + type);
+                throw new NotSupportedException($"Address type {type} is not supported for string parsing.");
         }
     }
 
-    public override int GetHashCode()
+    public void Encode(EncodeBuffer buffer)
     {
-        // DAL this was originally broken...
-        var str = Convert.ToBase64String(adr);
-        return str.GetHashCode();
+        TlvEncoder.encode_opening_tag(buffer, 1);
+        TlvEncoder.encode_application_unsigned(buffer, _net);
+        TlvEncoder.encode_application_octet_string(buffer, _adr, 0, _adr.Length);
+        TlvEncoder.encode_closing_tag(buffer, 1);
     }
 
-    public override string ToString() => ToString(type);
+    public override string ToString() => ToString(_type);
 
-    public string ToString(AddressTypes addressType)
+    private string ToString(AddressTypes addressType)
     {
         while (true)
         {
             switch (addressType)
             {
                 case AddressTypes.IP:
-                    return adr != null && adr.Length >= 6
-                        ? $"{adr[0]}.{adr[1]}.{adr[2]}.{adr[3]}:{adr[4] << 8 | adr[5]}"
+                    return Adr != null && Adr.Length >= 6
+                        ? $"{Adr[0]}.{Adr[1]}.{Adr[2]}.{Adr[3]}:{(Adr[4] << 8) | Adr[5]}"
                         : "0.0.0.0";
 
                 case AddressTypes.MSTP:
-                    return adr != null && adr.Length >= 1
-                        ? $"{adr[0]}"
+                    return Adr != null && Adr.Length >= 1
+                        ? $"{Adr[0]}"
                         : "-1";
 
                 case AddressTypes.PTP:
                     return "x";
 
                 case AddressTypes.Ethernet:
-                    return $"{new PhysicalAddress(adr)}";
+                    return $"{new PhysicalAddress(Adr)}";
 
                 case AddressTypes.IPV6:
-                    return adr != null && adr.Length == 18
-                        ? $"{new IPAddress(adr.Take(16).ToArray())}:{adr[16] << 8 | adr[17]}"
+                    return Adr != null && Adr.Length == 18
+                        ? $"{new IPAddress([.. Adr.Take(16)])}:{Adr[16] << 8 | Adr[17]}"
                         : "[::]";
 
                 default: // Routed @ are always like this, NPDU do not contains the MAC type, only the lenght
-                    if (adr == null || adr.Length == 0)
+                    if (Adr == null || Adr.Length == 0)
+                    {
                         return "?";
+                    }
 
-                    switch (adr.Length)
+                    switch (Adr.Length)
                     {
                         case 6: // certainly IP, but not sure (Newron System send it for internal usage with 4*0 bytes)
                             addressType = AddressTypes.IP;
@@ -108,90 +132,149 @@ internal class Address : IEncode
                             continue;
 
                         case 3:
-                            return $"IPv6 VMac : {adr[0] << 16 | adr[1] << 8 | adr[2]}";
+                            return $"IPv6 VMac : {(Adr[0] << 16) | (Adr[1] << 8) | Adr[2]}";
 
                         default:
-                            return string.Join(" ", adr);
+                            return string.Join(" ", Adr);
                     }
             }
         }
     }
 
+    //public override string ToString() => ToString(Type);
+
     public string ToString(bool sourceOnly)
     {
-        if (RoutedSource == null)
-            return ToString();
-
-        return sourceOnly
-            ? RoutedSource.ToString()
-            : $"{RoutedSource} via {ToString()}";
+        return _routedSource == null
+            ? ToString()
+            : sourceOnly
+            ? _routedSource.ToString()
+            : $"{_routedSource} via {ToString()}";
     }
 
     public bool HasAddress(IPAddress ipAddress)
-    {
-        if (type != AddressTypes.IP || adr == null || ipAddress == null)
-            return false;
-
-        return adr.Take(4).SequenceEqual(ipAddress.GetAddressBytes());
-    }
-
-    public override bool Equals(object obj)
-    {
-        if (obj is not Address) return false;
-        var d = (Address)obj;
-        if (adr == null && d.adr == null) return true;
-        if (adr == null || d.adr == null) return false;
-        if (adr.Length != d.adr.Length) return false;
-        if (adr.Where((t, i) => t != d.adr[i]).Any())
-            return false;
-
-        // Modif FC
-        if (RoutedSource == null && d.RoutedSource != null)
-            return false;
-
-        // DAL
-        if (RoutedDestination == null && d.RoutedDestination != null)
-            return false;
-
-        if (d.RoutedSource == null && RoutedSource == null &&
-            d.RoutedDestination == null && RoutedDestination == null)
-            return true;
-
-        bool rv = RoutedSource?.Equals(d.RoutedSource) ?? false;
-        rv |= RoutedDestination?.Equals(d.RoutedDestination) ?? false;
-        return rv;
-    }
+        => Type == AddressTypes.IP
+        && Adr != null
+        && ipAddress != null
+        && Adr.Take(4).SequenceEqual(ipAddress.GetAddressBytes());
 
     // checked if device is routed by curent equipement
     public bool IsMyRouter(Address device)
     {
         if (device.RoutedSource == null || RoutedSource != null)
+        {
             return false;
+        }
 
-        if (adr.Length != device.adr.Length)
-            return false;
-
-        return !adr.Where((t, i) => t != device.adr[i]).Any();
-    }
-
-    public void Encode(EncodeBuffer buffer)
-    {
-        TlvEncoder.encode_opening_tag(buffer, 1);
-        TlvEncoder.encode_application_unsigned(buffer, net);
-        TlvEncoder.encode_application_octet_string(buffer, adr, 0, adr.Length);
-        TlvEncoder.encode_closing_tag(buffer, 1);
+        return Adr.Length == device.Adr.Length
+            && !Adr.Where((t, i) => t != device.Adr[i]).Any();
     }
 
     public string FullHashString()
     {
-        var hash = $"{(uint)type}.{net}.{string.Concat(adr.Select(a => a.ToString("X2")))}";
+        string hash = $"{(uint)Type}.{Net}.{string.Concat(Adr.Select(a => a.ToString("X2")))}";
 
-        if (RoutedSource != null)
-            hash += $":{RoutedSource.FullHashString()}";
+        if (_routedSource != null)
+        {
+            hash += $":{_routedSource.FullHashString()}";
+        }
 
-        if (RoutedDestination != null)
-            hash += $":{RoutedDestination.FullHashString()}";
+        if (_routedDestination != null)
+        {
+            hash += $":{_routedDestination.FullHashString()}";
+        }
 
         return hash;
     }
+
+    public override bool Equals(object? obj) => obj is Address other && Equals(other);
+
+    public bool Equals(Address? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (_net != other.Net)
+        {
+            return false;
+        }
+
+        if (_type != other.Type)
+        {
+            return false;
+        }
+
+        if (_adr == null && other.Adr == null)
+        {
+            // 都为空，继续比较路由
+        }
+        else
+        {
+            if (_adr == null || other.Adr == null)
+            {
+                return false;
+            }
+
+            if (_adr.Length != other.Adr.Length)
+            {
+                return false;
+            }
+
+            if (!_adr.SequenceEqual(other.Adr))
+            {
+                return false;
+            }
+        }
+
+        if (_vmac == null && other.VMac == null)
+        {
+            // 都为空，继续
+        }
+        else
+        {
+            if (_vmac == null || other.VMac == null)
+            {
+                return false;
+            }
+
+            if (!_vmac.SequenceEqual(other.VMac))
+            {
+                return false;
+            }
+        }
+
+        bool routedSourceEqual = false;
+
+        if (_routedSource == null && other._routedSource == null)
+        {
+            routedSourceEqual = true;
+        }
+        else if (_routedSource != null)
+        {
+            routedSourceEqual = _routedSource.Equals(other.RoutedSource);
+        }
+        // else routedSourceEqual remains false if other._routedSource != null
+
+        bool routedDestinationEqual = false;
+
+        if (_routedDestination == null && other.RoutedDestination == null)
+        {
+            routedDestinationEqual = true;
+        }
+        else if (_routedDestination != null)
+        {
+            routedDestinationEqual = _routedDestination.Equals(other.RoutedDestination);
+        }
+
+        return routedSourceEqual && routedDestinationEqual;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(_net, _type, _adr, _vmac, _routedSource, _routedDestination);
 }

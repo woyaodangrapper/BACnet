@@ -2216,13 +2216,13 @@ internal class TlvEncoder
         encode_opening_tag(buffer, 1);
         /* network-number Unsigned16, */
         /* -- A value of 0 indicates the local network */
-        encode_application_unsigned(buffer, value.Recipient.net);
+        encode_application_unsigned(buffer, value.Recipient.Net);
         /* mac-address OCTET STRING */
         /* -- A string of length 0 indicates a broadcast */
-        if (value.Recipient.net == 0xFFFF)
+        if (value.Recipient.Net == 0xFFFF)
             encode_application_octet_string(buffer, new byte[0], 0, 0);
         else
-            encode_application_octet_string(buffer, value.Recipient.adr, 0, value.Recipient.adr.Length);
+            encode_application_octet_string(buffer, value.Recipient.Adr, 0, value.Recipient.Adr.Length);
         /* CHOICE - address [1] Address - closing */
         encode_closing_tag(buffer, 1);
         /*  recipient [0] BACnetRecipient - closing */
@@ -2274,12 +2274,12 @@ internal class TlvEncoder
         if (tagNumber != (byte)ApplicationTags.BACNET_APPLICATION_TAG_UNSIGNED_INT)
             return -1;
         len += decode_unsigned(buffer, offset + len, lenValueType, out var tmp);
-        value.Recipient.net = (ushort)tmp;
+        value.Recipient.Net = (ushort)tmp;
         len += decode_tag_number_and_value(buffer, offset + len, out tagNumber, out lenValueType);
         if (tagNumber != (byte)ApplicationTags.BACNET_APPLICATION_TAG_OCTET_STRING)
             return -1;
-        value.Recipient.adr = new byte[lenValueType];
-        len += decode_octet_string(buffer, offset + len, apduLen, value.Recipient.adr, 0, lenValueType);
+        value.Recipient.Adr = new byte[lenValueType];
+        len += decode_octet_string(buffer, offset + len, apduLen, value.Recipient.Adr, 0, lenValueType);
         if (!decode_is_closing_tag_number(buffer, offset + len, 1))
             return -1;
         len++;
